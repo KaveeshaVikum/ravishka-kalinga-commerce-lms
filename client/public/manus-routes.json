@@ -1,0 +1,8 @@
+{
+  "routes": [
+    { "path": "/", "title": "Ravishka Kalinga Commerce LMS" },
+    { "path": "/dashboard", "title": "Student Dashboard" },
+    { "path": "/admin", "title": "Admin Portal" },
+    { "path": "/404", "title": "Not Found" }
+  ]
+}
