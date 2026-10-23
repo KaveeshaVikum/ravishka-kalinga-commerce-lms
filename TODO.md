@@ -28,6 +28,7 @@
 ## Brand and delivery
 
 - [x] The app prominently uses the Ravishka Kalinga name and the user-provided black/red logo style.
+- [x] The supplied teacher photo has been background-removed into a transparent cut-out and integrated into the public hero section.
 - [x] A stable `/manus-routes.json` route manifest, health endpoint, app logo metadata, and production build are configured.
 - [ ] Custom domain connection remains open because no domain name has been selected yet.
 

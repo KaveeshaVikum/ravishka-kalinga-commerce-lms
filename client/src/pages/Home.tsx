@@ -159,30 +159,40 @@ export default function Home() {
             </span>
           </div>
         </div>
-        <div className="hero-orbit relative min-h-[440px] lg:min-h-[540px]">
-          <div className="absolute inset-8 rounded-[2rem] border border-white/10 bg-white/[0.025] p-6 shadow-2xl shadow-black/50 backdrop-blur-sm lg:inset-0 lg:p-10">
-            <div className="flex items-center justify-between border-b border-white/10 pb-5">
+        <div className="hero-orbit relative min-h-[520px] lg:min-h-[600px]">
+          <div className="teacher-card absolute inset-8 overflow-hidden rounded-[2rem] border border-white/10 bg-[#171717] shadow-2xl shadow-black/50 lg:inset-0">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_25%,rgba(255,59,59,.18),transparent_35%),linear-gradient(135deg,#1b1b1b,#0f0f0f)]" />
+            <div className="relative z-10 flex items-center justify-between border-b border-white/10 p-6 lg:p-8">
               <span className="eyebrow">CLASSROOM / 001</span>
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
-            <div className="mt-12 flex flex-col items-center text-center">
-              <div className="hero-logo-wrap">
-                <img
-                  src="/manus-storage/photo_2026-10-23_20-24-03_eb83a783.jpg"
-                  alt="Ravishka Kalinga logo"
-                  className="h-40 w-40 rounded-2xl object-cover"
-                />
-              </div>
-              <p className="mt-7 text-xs font-bold uppercase tracking-[0.25em] text-primary">
-                Commerce / Business + Accounting
+            <div className="relative z-10 max-w-[58%] p-6 pt-8 lg:p-10 lg:pt-12">
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary">
+                Your teacher
               </p>
-              <h2 className="mt-4 font-display text-4xl font-black uppercase tracking-[-0.04em] text-white">
-                Make the numbers
+              <h2 className="mt-4 font-display text-4xl font-black uppercase leading-[0.92] tracking-[-0.05em] text-white lg:text-6xl">
+                Learn from
                 <br />
-                <span className="text-white/35">make sense.</span>
+                <span className="text-white/35">the sharpest.</span>
               </h2>
+              <p className="mt-5 max-w-[220px] text-sm leading-6 text-white/45">
+                Commerce made clear by Ravishka Kalinga.
+              </p>
             </div>
-            <div className="absolute bottom-6 left-6 right-6 grid grid-cols-3 gap-2 border-t border-white/10 pt-5 text-center lg:bottom-10 lg:left-10 lg:right-10">
+            <img
+              src="/manus-storage/sir-cutout_a8fb0dce.png"
+              alt="Ravishka Kalinga teaching Commerce"
+              className="teacher-cutout absolute bottom-0 right-[-12%] z-[5] w-[86%] max-w-none lg:right-[-9%] lg:w-[82%]"
+            />
+            <div className="absolute bottom-28 left-6 z-10 rounded border border-primary/25 bg-black/40 px-3 py-2 backdrop-blur-sm lg:bottom-32 lg:left-10">
+              <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
+                Commerce / Business + Accounting
+              </div>
+              <div className="mt-1 font-display text-xl font-bold uppercase text-white">
+                Make the numbers make sense.
+              </div>
+            </div>
+            <div className="absolute bottom-6 left-6 right-6 z-10 grid grid-cols-3 gap-2 border-t border-white/10 pt-5 text-center lg:bottom-10 lg:left-10 lg:right-10">
               <div>
                 <div className="font-display text-2xl font-bold text-white">
                   01
