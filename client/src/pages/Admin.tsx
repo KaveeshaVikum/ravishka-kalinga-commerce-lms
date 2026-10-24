@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   Megaphone,
+  Menu,
   PlayCircle,
   Plus,
   ReceiptText,
@@ -80,6 +81,7 @@ export default function Admin() {
   });
   const [uploadingLesson, setUploadingLesson] = useState<number | null>(null);
   const [section, setSection] = useState("overview");
+  const [mobileOpen, setMobileOpen] = useState(false);
   const createCourse = trpc.admin.createCourse.useMutation({
     onSuccess: () => {
       setCourseForm({ title: "", slug: "", description: "" });
@@ -210,12 +212,21 @@ export default function Admin() {
 
   return (
     <div className="portal-shell min-h-screen bg-[#101010] text-white">
-      <aside className="portal-sidebar">
+      <aside className={`portal-sidebar ${mobileOpen ? "is-open" : ""}`}>
         <div className="flex items-center justify-between">
           <Brand compact />
-          <Badge className="border-primary/30 bg-primary/10 text-primary">
-            Admin
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge className="border-primary/30 bg-primary/10 text-primary">
+              Admin
+            </Badge>
+            <button
+              className="md:hidden"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5 text-white/50" />
+            </button>
+          </div>
         </div>
         <div className="mt-12">
           <div className="eyebrow">
@@ -232,7 +243,10 @@ export default function Admin() {
             className={
               section === "overview" ? "portal-nav-active w-full" : "w-full"
             }
-            onClick={() => setSection("overview")}
+            onClick={() => {
+              setSection("overview");
+              setMobileOpen(false);
+            }}
           >
             <LayoutDashboard className="h-4 w-4" /> {t.adminOverview}
           </button>
@@ -240,7 +254,10 @@ export default function Admin() {
             className={
               section === "receipts" ? "portal-nav-active w-full" : "w-full"
             }
-            onClick={() => setSection("receipts")}
+            onClick={() => {
+              setSection("receipts");
+              setMobileOpen(false);
+            }}
           >
             <ReceiptText className="h-4 w-4" /> {t.paymentReviews}{" "}
             <span className="ml-auto rounded bg-primary px-1.5 py-0.5 text-[10px] font-black text-black">
@@ -252,7 +269,10 @@ export default function Admin() {
             className={
               section === "courses" ? "portal-nav-active w-full" : "w-full"
             }
-            onClick={() => setSection("courses")}
+            onClick={() => {
+              setSection("courses");
+              setMobileOpen(false);
+            }}
           >
             <PlayCircle className="h-4 w-4" /> {t.coursesLessons}
           </button>
@@ -262,7 +282,10 @@ export default function Admin() {
                 ? "portal-nav-active w-full"
                 : "w-full"
             }
-            onClick={() => setSection("announcements")}
+            onClick={() => {
+              setSection("announcements");
+              setMobileOpen(false);
+            }}
           >
             <Megaphone className="h-4 w-4" /> {t.adminAnnouncements}
           </button>
@@ -278,6 +301,13 @@ export default function Admin() {
       </aside>
       <div className="portal-main">
         <header className="portal-header">
+          <button
+            className="mr-4 md:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5 text-white/60" />
+          </button>
           <div className="eyebrow">
             <span className="eyebrow-line" /> ADMIN / RAVISHKA KALINGA
           </div>
