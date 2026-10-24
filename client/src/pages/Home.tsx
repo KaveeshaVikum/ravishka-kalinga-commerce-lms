@@ -17,6 +17,11 @@ import { Brand, Wordmark } from "@/components/Brand";
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import {
+  LanguageToggle,
+  PaymentInstructions,
+  useLanguage,
+} from "@/components/Language";
 
 function CourseCard({
   course,
@@ -81,6 +86,7 @@ function CourseCard({
 
 export default function Home() {
   const auth = useAuth();
+  const { t } = useLanguage();
   const catalog = trpc.lms.catalog.useQuery();
   const courses = catalog.data?.courses ?? [];
   const lessons = catalog.data?.lessons ?? [];
@@ -100,15 +106,16 @@ export default function Home() {
           <Brand compact />
           <nav className="hidden items-center gap-8 text-xs font-bold uppercase tracking-[0.16em] text-white/45 md:flex">
             <a href="#path" className="transition hover:text-white">
-              Learning path
+              {t.homeNav[0]}
             </a>
             <a href="#why" className="transition hover:text-white">
-              Why this class
+              {t.homeNav[1]}
             </a>
             <a href="#access" className="transition hover:text-white">
-              Access
+              {t.homeNav[2]}
             </a>
           </nav>
+          <LanguageToggle />
           <Button
             onClick={startLearning}
             variant="outline"
@@ -118,7 +125,7 @@ export default function Home() {
               "Open dashboard"
             ) : (
               <>
-                <LogIn className="h-4 w-4" /> Student login
+                <LogIn className="h-4 w-4" /> {t.studentLogin}
               </>
             )}
           </Button>
@@ -138,13 +145,13 @@ export default function Home() {
               size="lg"
               className="h-12 bg-primary px-7 font-bold uppercase tracking-[0.11em] text-black hover:bg-[#ff5a5a]"
             >
-              Start your class <ArrowRight className="h-4 w-4" />
+              {t.startClass} <ArrowRight className="h-4 w-4" />
             </Button>
             <a
               href="#path"
               className="inline-flex h-12 items-center justify-center rounded-md border border-white/12 px-7 text-sm font-bold uppercase tracking-[0.11em] text-white/70 transition hover:border-white/25 hover:text-white"
             >
-              Explore syllabus
+              {t.exploreSyllabus}
             </a>
           </div>
           <div className="mt-12 flex flex-wrap gap-x-8 gap-y-4 text-xs font-bold uppercase tracking-[0.14em] text-white/35">
@@ -229,6 +236,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <PaymentInstructions />
 
       <section
         id="path"
@@ -337,6 +346,9 @@ export default function Home() {
       <footer className="relative z-10 flex flex-col justify-between gap-4 border-t border-white/8 px-5 py-8 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 md:flex-row lg:px-10">
         <span>© {new Date().getFullYear()} Ravishka Kalinga</span>
         <span>Commerce — Business and Accounting</span>
+        <a href="/admin" className="transition hover:text-white">
+          {t.adminPortal}
+        </a>
         <span className="flex items-center gap-1">
           <Clock3 className="h-3 w-3" /> Learn at your pace
         </span>

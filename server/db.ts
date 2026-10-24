@@ -32,7 +32,15 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   const values: InsertUser = { openId: user.openId };
   const updateSet: Record<string, unknown> = {};
-  const textFields = ["name", "email", "loginMethod"] as const;
+  const textFields = [
+    "name",
+    "email",
+    "phone",
+    "school",
+    "grade",
+    "district",
+    "loginMethod",
+  ] as const;
   for (const field of textFields) {
     if (user[field] !== undefined) {
       values[field] = user[field] ?? null;
@@ -68,6 +76,36 @@ export async function getUserByOpenId(openId: string) {
     .where(eq(users.openId, openId))
     .limit(1);
   return result[0];
+}
+
+export async function getUserById(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return result[0];
+}
+
+export async function updateStudentProfile(
+  userId: number,
+  profile: {
+    name: string;
+    phone: string;
+    school: string;
+    grade: string;
+    district: string;
+  }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db
+    .update(users)
+    .set({ ...profile, profileCompleted: 1, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+  return getUserById(userId);
 }
 
 export async function getPublishedCatalog() {

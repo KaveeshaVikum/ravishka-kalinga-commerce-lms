@@ -24,6 +24,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Brand } from "@/components/Brand";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import {
+  LanguageToggle,
+  PaymentInstructions,
+  useLanguage,
+} from "@/components/Language";
 
 function StatusPill({ status }: { status: string }) {
   const config: Record<
@@ -103,7 +108,13 @@ function FileToBase64({
 
 export default function Dashboard() {
   const auth = useAuth({ redirectOnUnauthenticated: true });
+  const { t } = useLanguage();
   const utils = trpc.useUtils();
+  const updateProfile = trpc.auth.updateProfile.useMutation({
+    onSuccess: async () => {
+      await auth.refresh();
+    },
+  });
   const overview = trpc.lms.dashboard.useQuery(undefined, {
     enabled: auth.isAuthenticated,
     retry: false,
@@ -115,6 +126,13 @@ export default function Dashboard() {
     },
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profile, setProfile] = useState({
+    name: "",
+    phone: "",
+    school: "",
+    grade: "",
+    district: "",
+  });
   const [form, setForm] = useState<{
     courseId: string;
     amount: string;
@@ -151,6 +169,10 @@ export default function Dashboard() {
       fileData: form.file.data,
     });
   };
+  const saveProfile = (event: FormEvent) => {
+    event.preventDefault();
+    updateProfile.mutate(profile);
+  };
 
   return (
     <div className="portal-shell min-h-screen bg-[#101010] text-white">
@@ -163,7 +185,7 @@ export default function Dashboard() {
         </div>
         <div className="mt-12">
           <div className="eyebrow">
-            <span className="eyebrow-line" /> STUDENT DESK
+            <span className="eyebrow-line" /> {t.studentDesk}
           </div>
           <h2 className="mt-4 font-display text-3xl font-black uppercase tracking-[-0.04em]">
             Keep moving,
@@ -173,16 +195,17 @@ export default function Dashboard() {
         </div>
         <nav className="mt-12 space-y-2 text-sm">
           <a className="portal-nav-active" href="#overview">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Overview
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />{" "}
+            {t.overview}
           </a>
           <a href="#lessons">
-            <PlayCircle className="h-4 w-4" /> My lessons
+            <PlayCircle className="h-4 w-4" /> {t.myLessons}
           </a>
           <a href="#payment">
-            <ReceiptText className="h-4 w-4" /> Payment proof
+            <ReceiptText className="h-4 w-4" /> {t.paymentProof}
           </a>
           <a href="#announcements">
-            <ArrowUpRight className="h-4 w-4" /> Announcements
+            <ArrowUpRight className="h-4 w-4" /> {t.announcements}
           </a>
           {auth.user.role === "admin" && (
             <a href="/admin">
@@ -208,6 +231,7 @@ export default function Dashboard() {
             <span className="eyebrow-line" /> YOUR LEARNING SPACE
           </div>
           <div className="ml-auto flex items-center gap-4">
+            <LanguageToggle />
             <span className="hidden text-xs text-white/35 sm:block">
               {auth.user.email}
             </span>
@@ -220,6 +244,60 @@ export default function Dashboard() {
           id="overview"
           className="mx-auto max-w-6xl px-5 py-8 lg:px-10 lg:py-12"
         >
+          {!auth.user.profileCompleted && (
+            <Card className="mb-10 border-primary/30 bg-primary/[0.07] text-white shadow-none">
+              <CardHeader className="px-6 pb-3 pt-6">
+                <div className="eyebrow text-primary">
+                  <span className="eyebrow-line bg-primary" /> {t.required}
+                </div>
+                <CardTitle className="mt-3 text-2xl font-bold uppercase">
+                  {t.completeProfile}
+                </CardTitle>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-white/50">
+                  {t.profileBody}
+                </p>
+              </CardHeader>
+              <CardContent className="px-6 pb-6">
+                <form
+                  onSubmit={saveProfile}
+                  className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                >
+                  {[
+                    { key: "name", label: t.fullName, type: "text" },
+                    { key: "phone", label: t.phone, type: "tel" },
+                    { key: "school", label: t.school, type: "text" },
+                    { key: "grade", label: t.grade, type: "text" },
+                    { key: "district", label: t.district, type: "text" },
+                  ].map(field => (
+                    <label key={field.key} className="field-label">
+                      {field.label}
+                      <Input
+                        required
+                        type={field.type}
+                        value={profile[field.key as keyof typeof profile]}
+                        onChange={event =>
+                          setProfile({
+                            ...profile,
+                            [field.key]: event.target.value,
+                          })
+                        }
+                        className="field-control"
+                      />
+                    </label>
+                  ))}
+                  <div className="flex items-end">
+                    <Button
+                      disabled={updateProfile.isPending}
+                      className="h-10 w-full bg-primary font-bold uppercase tracking-[.1em] text-black hover:bg-[#ff5a5a]"
+                    >
+                      {updateProfile.isPending ? "Saving…" : t.saveProfile}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+          <PaymentInstructions />
           <div className="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <div className="eyebrow">

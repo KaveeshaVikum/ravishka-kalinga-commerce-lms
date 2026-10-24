@@ -23,6 +23,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Brand } from "@/components/Brand";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { LanguageToggle, useLanguage } from "@/components/Language";
+import { startLogin } from "@/const";
 
 function readAsBase64(
   file: File,
@@ -52,7 +54,8 @@ function AdminStatus({ status }: { status: string }) {
 }
 
 export default function Admin() {
-  const auth = useAuth({ redirectOnUnauthenticated: true });
+  const auth = useAuth();
+  const { t } = useLanguage();
   const utils = trpc.useUtils();
   const [search, setSearch] = useState("");
   const overview = trpc.admin.overview.useQuery(
@@ -118,10 +121,43 @@ export default function Admin() {
   });
   const data = overview.data;
 
-  if (auth.loading || !auth.user)
+  if (auth.loading)
     return (
       <div className="min-h-screen bg-[#101010] p-8 text-white/50">
         Opening the admin portal…
+      </div>
+    );
+  if (!auth.user)
+    return (
+      <div className="min-h-screen bg-[#101010] p-6 text-white sm:p-10">
+        <div className="mx-auto max-w-lg pt-16">
+          <div className="flex items-center justify-between">
+            <Brand compact />
+            <LanguageToggle />
+          </div>
+          <Card className="mt-12 border-primary/25 bg-white/[0.035] text-white shadow-none">
+            <CardHeader>
+              <div className="eyebrow text-primary">
+                <span className="eyebrow-line bg-primary" /> ADMIN / SECURE
+                ACCESS
+              </div>
+              <CardTitle className="mt-4 text-3xl font-bold uppercase">
+                {t.adminLoginTitle}
+              </CardTitle>
+              <p className="mt-3 text-sm leading-6 text-white/45">
+                {t.adminLoginBody}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={startLogin}
+                className="w-full bg-primary font-bold uppercase tracking-[.1em] text-black hover:bg-[#ff5a5a]"
+              >
+                {t.signInAdmin}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   if (auth.user.role !== "admin")
@@ -131,7 +167,7 @@ export default function Admin() {
           Return home
         </a>
         <h1 className="mt-8 font-display text-4xl font-black uppercase">
-          Admin access required.
+          {t.accessDenied}
         </h1>
       </div>
     );
@@ -183,7 +219,7 @@ export default function Admin() {
         </div>
         <div className="mt-12">
           <div className="eyebrow">
-            <span className="eyebrow-line" /> CONTROL ROOM
+            <span className="eyebrow-line" /> {t.controlRoom}
           </div>
           <h2 className="mt-4 font-display text-3xl font-black uppercase tracking-[-0.04em]">
             Run the
@@ -198,7 +234,7 @@ export default function Admin() {
             }
             onClick={() => setSection("overview")}
           >
-            <LayoutDashboard className="h-4 w-4" /> Overview
+            <LayoutDashboard className="h-4 w-4" /> {t.adminOverview}
           </button>
           <button
             className={
@@ -206,7 +242,7 @@ export default function Admin() {
             }
             onClick={() => setSection("receipts")}
           >
-            <ReceiptText className="h-4 w-4" /> Payment reviews{" "}
+            <ReceiptText className="h-4 w-4" /> {t.paymentReviews}{" "}
             <span className="ml-auto rounded bg-primary px-1.5 py-0.5 text-[10px] font-black text-black">
               {data?.receipts.filter(receipt => receipt.status === "pending")
                 .length ?? 0}
@@ -218,7 +254,7 @@ export default function Admin() {
             }
             onClick={() => setSection("courses")}
           >
-            <PlayCircle className="h-4 w-4" /> Courses & lessons
+            <PlayCircle className="h-4 w-4" /> {t.coursesLessons}
           </button>
           <button
             className={
@@ -228,7 +264,7 @@ export default function Admin() {
             }
             onClick={() => setSection("announcements")}
           >
-            <Megaphone className="h-4 w-4" /> Announcements
+            <Megaphone className="h-4 w-4" /> {t.adminAnnouncements}
           </button>
         </nav>
         <div className="mt-auto border-t border-white/10 pt-5">
@@ -246,6 +282,7 @@ export default function Admin() {
             <span className="eyebrow-line" /> ADMIN / RAVISHKA KALINGA
           </div>
           <div className="ml-auto flex items-center gap-4">
+            <LanguageToggle />
             <a
               href="/dashboard"
               className="text-xs font-bold uppercase tracking-[0.12em] text-white/40 hover:text-white"

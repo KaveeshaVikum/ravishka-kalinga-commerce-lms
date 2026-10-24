@@ -5,12 +5,14 @@
 - [x] Students can sign in and sign out using the project’s real Manus OAuth login flow; the existing account record is created/updated in the managed database.
 - [x] Students can view a dashboard with enrolled courses, payment approval status, available lessons, announcements, and a personal payment history.
 - [x] Students can browse the Commerce – Business and Accounting lessons and only open lesson recordings when the matching enrollment is approved.
+- [x] Students must complete a required registration profile with full name, phone number, school/institute, grade/class, and district before using the learning dashboard.
 
 ## Manual payment and receipt verification
 
 - [x] Students can submit a manual payment receipt as an image or document with optional amount and payment reference details.
 - [x] Each receipt submission shows a clear pending, approved, or rejected status to the student.
 - [x] Admins can review submitted receipts, approve or reject them, record a rejection note, and update the student’s payment/access status.
+- [x] Public and student dashboard payment-instructions sections explain the three-step manual payment, reference, receipt-upload, and admin-approval process without inventing bank details.
 
 ## Announcements
 
@@ -20,6 +22,7 @@
 ## Protected administration portal
 
 - [x] The student-facing LMS is separate from an admin-only `/admin` portal protected by the application admin role.
+- [x] The `/admin` route has an explicit authorized-account sign-in screen, admin-role gate, and a public footer entry point.
 - [x] Admins can search and view student accounts and manage course access through receipt review.
 - [x] Admins can create course/lesson drafts, publish or unpublish courses and lessons, and set lesson ordering when creating a lesson.
 - [x] Only admins can upload lesson recordings and attach them to lessons through managed storage.
@@ -30,6 +33,7 @@
 - [x] The app prominently uses the Ravishka Kalinga name and the user-provided black/red logo style.
 - [x] The supplied teacher photo has been background-removed into a transparent cut-out and integrated into the public hero section.
 - [x] A stable `/manus-routes.json` route manifest, health endpoint, app logo metadata, and production build are configured.
+- [x] English/Sinhala language toggle is persisted in local storage and connected to public navigation/CTAs, payment instructions, student registration, dashboard navigation, and admin access/navigation copy.
 - [ ] Custom domain connection remains open because no domain name has been selected yet.
 
 ## Current implementation state

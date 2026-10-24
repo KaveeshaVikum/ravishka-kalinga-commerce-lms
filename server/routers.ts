@@ -16,6 +16,7 @@ import {
   getDb,
   getPublishedCatalog,
   getStudentOverview,
+  updateStudentProfile,
 } from "./db";
 import { storagePut } from "./storage";
 import { COOKIE_NAME } from "@shared/const";
@@ -38,6 +39,20 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    updateProfile: protectedProcedure
+      .input(
+        z.object({
+          name: z.string().min(2).max(120),
+          phone: z.string().min(7).max(30),
+          school: z.string().min(2).max(180),
+          grade: z.string().min(1).max(40),
+          district: z.string().min(2).max(80),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const user = await updateStudentProfile(ctx.user.id, input);
+        return { success: true as const, user };
+      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -86,13 +101,11 @@ export const appRouter = router({
             .set({ accessStatus: "pending", updatedAt: new Date() })
             .where(eq(enrollments.id, existing.id));
         } else {
-          await db
-            .insert(enrollments)
-            .values({
-              userId: ctx.user.id,
-              courseId: input.courseId,
-              accessStatus: "pending",
-            });
+          await db.insert(enrollments).values({
+            userId: ctx.user.id,
+            courseId: input.courseId,
+            accessStatus: "pending",
+          });
         }
         await db.insert(receipts).values({
           userId: ctx.user.id,
