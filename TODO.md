@@ -43,4 +43,5 @@
 - [x] TypeScript diagnostics registered for the project.
 - [x] Default Commerce — Business and Accounting course, three starter lessons, and a welcome announcement seeded.
 - [x] TypeScript check, production build, health endpoint, route manifest, and desktop/mobile preview checks completed.
+- [x] Homepage mobile and tablet layouts were refined: responsive header wrapping, readable hero copy, contained teacher card, non-overlapping photo/callout/stats, and safer portal content overflow behavior.
 - [x] Final checkpoint committed and pushed to the managed project’s canonical `main` branch. Publication/custom domain connection is intentionally left for the next step because no domain name has been selected.

@@ -102,7 +102,7 @@ export default function Home() {
     <main className="min-h-screen overflow-hidden bg-[#101010] text-white">
       <div className="noise" />
       <header className="relative z-10 border-b border-white/8">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 lg:px-10">
+        <div className="site-header-inner mx-auto flex max-w-7xl items-center justify-between px-5 py-5 lg:px-10">
           <Brand compact />
           <nav className="hidden items-center gap-8 text-xs font-bold uppercase tracking-[0.16em] text-white/45 md:flex">
             <a href="#path" className="transition hover:text-white">
@@ -132,7 +132,7 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="relative z-10 mx-auto grid max-w-7xl gap-12 px-5 pb-24 pt-20 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:pb-32 lg:pt-28">
+      <section className="hero-section relative z-10 mx-auto grid max-w-7xl gap-12 px-5 pb-24 pt-20 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:pb-32 lg:pt-28">
         <div className="flex flex-col justify-center">
           <Wordmark />
           <p className="mt-8 max-w-xl text-lg leading-8 text-white/55 sm:text-xl">
@@ -173,11 +173,11 @@ export default function Home() {
               <span className="eyebrow">CLASSROOM / 001</span>
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
-            <div className="relative z-10 max-w-[58%] p-6 pt-8 lg:p-10 lg:pt-12">
+            <div className="teacher-copy relative z-10 max-w-[58%] p-6 pt-8 lg:p-10 lg:pt-12">
               <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary">
                 Your teacher
               </p>
-              <h2 className="mt-4 font-display text-4xl font-black uppercase leading-[0.92] tracking-[-0.05em] text-white lg:text-6xl">
+              <h2 className="teacher-title mt-4 font-display text-4xl font-black uppercase leading-[0.92] tracking-[-0.05em] text-white lg:text-6xl">
                 Learn from
                 <br />
                 <span className="text-white/35">the sharpest.</span>
@@ -191,7 +191,7 @@ export default function Home() {
               alt="Ravishka Kalinga teaching Commerce"
               className="teacher-cutout absolute bottom-0 right-[-12%] z-[5] w-[86%] max-w-none lg:right-[-9%] lg:w-[82%]"
             />
-            <div className="absolute bottom-28 left-6 z-10 rounded border border-primary/25 bg-black/40 px-3 py-2 backdrop-blur-sm lg:bottom-32 lg:left-10">
+            <div className="teacher-callout absolute bottom-28 left-6 z-10 rounded border border-primary/25 bg-black/40 px-3 py-2 backdrop-blur-sm lg:bottom-32 lg:left-10">
               <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
                 Commerce / Business + Accounting
               </div>
@@ -199,7 +199,7 @@ export default function Home() {
                 Make the numbers make sense.
               </div>
             </div>
-            <div className="absolute bottom-6 left-6 right-6 z-10 grid grid-cols-3 gap-2 border-t border-white/10 pt-5 text-center lg:bottom-10 lg:left-10 lg:right-10">
+            <div className="teacher-stats absolute bottom-6 left-6 right-6 z-10 grid grid-cols-3 gap-2 border-t border-white/10 pt-5 text-center lg:bottom-10 lg:left-10 lg:right-10">
               <div>
                 <div className="font-display text-2xl font-bold text-white">
                   01
