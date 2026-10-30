@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import {
   announcements,
+  assignments,
   courses,
   enrollments,
   lessons,
@@ -47,6 +48,10 @@ export const appRouter = router({
           school: z.string().min(2).max(180),
           grade: z.string().min(1).max(40),
           district: z.string().min(2).max(80),
+          addressLine1: z.string().min(3).max(180),
+          addressLine2: z.string().max(180).optional(),
+          city: z.string().min(2).max(100),
+          postalCode: z.string().max(20).optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -202,6 +207,59 @@ export const appRouter = router({
           .update(lessons)
           .set({ status: input.status, updatedAt: new Date() })
           .where(eq(lessons.id, input.lessonId));
+        return { success: true } as const;
+      }),
+    createAssignment: adminProcedure
+      .input(
+        z.object({
+          courseId: z.number().int().positive(),
+          title: z.string().min(3).max(180),
+          instructions: z.string().min(5).max(10000),
+          dueAt: z.string().datetime().optional(),
+          status: z.enum(["draft", "published"]).default("draft"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database is not available",
+          });
+        const course = await getCourseById(input.courseId);
+        if (!course)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Course not found",
+          });
+        await db.insert(assignments).values({
+          courseId: input.courseId,
+          title: input.title,
+          instructions: input.instructions,
+          dueAt: input.dueAt ? new Date(input.dueAt) : null,
+          status: input.status,
+          createdBy: ctx.user.id,
+        });
+        return { success: true } as const;
+      }),
+    setAssignmentStatus: adminProcedure
+      .input(
+        z.object({
+          assignmentId: z.number().int().positive(),
+          status: z.enum(["draft", "published"]),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database is not available",
+          });
+        await db
+          .update(assignments)
+          .set({ status: input.status, updatedAt: new Date() })
+          .where(eq(assignments.id, input.assignmentId));
         return { success: true } as const;
       }),
     uploadLessonFile: adminProcedure

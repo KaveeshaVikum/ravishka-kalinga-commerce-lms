@@ -1,4 +1,5 @@
 import { OAUTH_STATE_COOKIE, encodeOAuthState } from "@shared/const";
+import { toast } from "sonner";
 
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
@@ -10,12 +11,18 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 // `state` it sends. Do NOT call it during render (no `href={startLogin()}` /
 // `loginUrl={...}`): each call overwrites the cookie, so a stray render-phase
 // call would desync it from an in-flight login and the callback would reject it
-// with "invalid oauth state". It returns void by design, so there is no URL to
-// stash across renders.
-export const startLogin = () => {
+// with "invalid oauth state". It returns false when required public OAuth
+// configuration is missing; otherwise it starts navigation immediately.
+export const startLogin = (): boolean => {
   const oauthPortalUrl = window.__MANUS_CONFIG__?.oauthPortalUrl;
   const appId = window.__MANUS_CONFIG__?.projectId;
-  if (!oauthPortalUrl || !appId) throw new Error("Manus login is not configured");
+  if (!oauthPortalUrl || !appId) {
+    toast.error(
+      "Student sign-in is not configured for this site yet. Please contact the administrator.",
+      { id: "student-login-not-configured" }
+    );
+    return false;
+  }
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
 
   const nonce = crypto.randomUUID();
@@ -29,4 +36,5 @@ export const startLogin = () => {
   url.searchParams.set("responseType", "code");
 
   window.location.href = url.toString();
+  return true;
 };

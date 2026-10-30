@@ -1,7 +1,8 @@
-import { and, asc, desc, eq, like, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   announcements,
+  assignments,
   courses,
   enrollments,
   InsertUser,
@@ -97,6 +98,10 @@ export async function updateStudentProfile(
     school: string;
     grade: string;
     district: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    postalCode?: string;
   }
 ) {
   const db = await getDb();
@@ -133,6 +138,7 @@ export async function getStudentOverview(userId: number) {
       enrollments: [],
       receipts: [],
       announcements: [],
+      assignments: [],
     };
   const [
     courseRows,
@@ -167,12 +173,37 @@ export async function getStudentOverview(userId: number) {
       .where(eq(announcements.isPublished, 1))
       .orderBy(desc(announcements.createdAt)),
   ]);
+  const publishedCourseIds = new Set(courseRows.map(course => course.id));
+  const eligibleCourseIds = [
+    ...new Set(
+      enrollmentRows
+        .filter(
+          enrollment =>
+            enrollment.accessStatus === "approved" &&
+            publishedCourseIds.has(enrollment.courseId)
+        )
+        .map(enrollment => enrollment.courseId)
+    ),
+  ];
+  const assignmentRows = eligibleCourseIds.length
+    ? await db
+        .select()
+        .from(assignments)
+        .where(
+          and(
+            eq(assignments.status, "published"),
+            inArray(assignments.courseId, eligibleCourseIds)
+          )
+        )
+        .orderBy(asc(assignments.dueAt), desc(assignments.createdAt))
+    : [];
   return {
     courses: courseRows,
     lessons: lessonRows,
     enrollments: enrollmentRows,
     receipts: receiptRows,
     announcements: announcementRows,
+    assignments: assignmentRows,
   };
 }
 
@@ -185,6 +216,7 @@ export async function getAdminOverview(search?: string) {
       students: [],
       receipts: [],
       announcements: [],
+      assignments: [],
     };
   const studentFilter = search?.trim()
     ? or(
@@ -192,26 +224,34 @@ export async function getAdminOverview(search?: string) {
         like(users.email, `%${search.trim()}%`)
       )
     : undefined;
-  const [courseRows, lessonRows, studentRows, receiptRows, announcementRows] =
-    await Promise.all([
-      db.select().from(courses).orderBy(desc(courses.updatedAt)),
-      db.select().from(lessons).orderBy(asc(lessons.sortOrder)),
-      studentFilter
-        ? db
-            .select()
-            .from(users)
-            .where(studentFilter)
-            .orderBy(desc(users.createdAt))
-        : db.select().from(users).orderBy(desc(users.createdAt)),
-      db.select().from(receipts).orderBy(desc(receipts.submittedAt)),
-      db.select().from(announcements).orderBy(desc(announcements.createdAt)),
-    ]);
+  const [
+    courseRows,
+    lessonRows,
+    studentRows,
+    receiptRows,
+    announcementRows,
+    assignmentRows,
+  ] = await Promise.all([
+    db.select().from(courses).orderBy(desc(courses.updatedAt)),
+    db.select().from(lessons).orderBy(asc(lessons.sortOrder)),
+    studentFilter
+      ? db
+          .select()
+          .from(users)
+          .where(studentFilter)
+          .orderBy(desc(users.createdAt))
+      : db.select().from(users).orderBy(desc(users.createdAt)),
+    db.select().from(receipts).orderBy(desc(receipts.submittedAt)),
+    db.select().from(announcements).orderBy(desc(announcements.createdAt)),
+    db.select().from(assignments).orderBy(desc(assignments.createdAt)),
+  ]);
   return {
     courses: courseRows,
     lessons: lessonRows,
     students: studentRows,
     receipts: receiptRows,
     announcements: announcementRows,
+    assignments: assignmentRows,
   };
 }
 

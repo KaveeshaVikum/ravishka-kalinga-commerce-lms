@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import {
   Check,
   ChevronRight,
+  ClipboardList,
   FileUp,
   LayoutDashboard,
   LogOut,
@@ -79,6 +80,12 @@ export default function Admin() {
     title: "",
     body: "",
   });
+  const [assignmentForm, setAssignmentForm] = useState({
+    courseId: "",
+    title: "",
+    instructions: "",
+    dueAt: "",
+  });
   const [uploadingLesson, setUploadingLesson] = useState<number | null>(null);
   const [section, setSection] = useState("overview");
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -111,6 +118,20 @@ export default function Admin() {
       setAnnouncementForm({ title: "", body: "" });
       void utils.admin.overview.invalidate();
     },
+  });
+  const createAssignment = trpc.admin.createAssignment.useMutation({
+    onSuccess: () => {
+      setAssignmentForm({
+        courseId: "",
+        title: "",
+        instructions: "",
+        dueAt: "",
+      });
+      void utils.admin.overview.invalidate();
+    },
+  });
+  const setAssignmentStatus = trpc.admin.setAssignmentStatus.useMutation({
+    onSuccess: () => void utils.admin.overview.invalidate(),
   });
   const reviewReceipt = trpc.admin.reviewReceipt.useMutation({
     onSuccess: () => void utils.admin.overview.invalidate(),
@@ -209,6 +230,24 @@ export default function Admin() {
     if (!announcementForm.title || !announcementForm.body) return;
     createAnnouncement.mutate({ ...announcementForm, type: "general" });
   };
+  const submitAssignment = (event: FormEvent) => {
+    event.preventDefault();
+    if (
+      !assignmentForm.courseId ||
+      !assignmentForm.title.trim() ||
+      !assignmentForm.instructions.trim()
+    )
+      return;
+    createAssignment.mutate({
+      courseId: Number(assignmentForm.courseId),
+      title: assignmentForm.title,
+      instructions: assignmentForm.instructions,
+      dueAt: assignmentForm.dueAt
+        ? new Date(assignmentForm.dueAt).toISOString()
+        : undefined,
+      status: "draft",
+    });
+  };
 
   return (
     <div className="portal-shell min-h-screen bg-[#101010] text-white">
@@ -275,6 +314,17 @@ export default function Admin() {
             }}
           >
             <PlayCircle className="h-4 w-4" /> {t.coursesLessons}
+          </button>
+          <button
+            className={
+              section === "assignments" ? "portal-nav-active w-full" : "w-full"
+            }
+            onClick={() => {
+              setSection("assignments");
+              setMobileOpen(false);
+            }}
+          >
+            <ClipboardList className="h-4 w-4" /> {t.adminAssignments}
           </button>
           <button
             className={
@@ -880,6 +930,168 @@ export default function Admin() {
                   )}
                 </CardContent>
               </Card>
+            </section>
+          )}
+
+          {section === "assignments" && (
+            <section className="mt-12 space-y-6">
+              <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+                <Card className="border-primary/20 bg-primary/[0.06] text-white shadow-none">
+                  <CardHeader className="px-6 pb-3 pt-6">
+                    <div className="eyebrow text-primary">
+                      <span className="eyebrow-line bg-primary" /> ASSIGNMENT
+                      BUILDER
+                    </div>
+                    <CardTitle className="mt-3 text-2xl font-bold uppercase">
+                      New assignment
+                    </CardTitle>
+                    <p className="mt-2 text-sm leading-6 text-white/45">
+                      Save as a draft, then publish it for students with
+                      approved access to the course.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="px-6 pb-6">
+                    <form onSubmit={submitAssignment} className="space-y-3">
+                      <label className="field-label">
+                        Course
+                        <select
+                          required
+                          value={assignmentForm.courseId}
+                          onChange={event =>
+                            setAssignmentForm({
+                              ...assignmentForm,
+                              courseId: event.target.value,
+                            })
+                          }
+                          className="field-control"
+                        >
+                          <option value="">Choose course</option>
+                          {(data?.courses ?? []).map(course => (
+                            <option key={course.id} value={course.id}>
+                              {course.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <Input
+                        required
+                        minLength={3}
+                        maxLength={180}
+                        value={assignmentForm.title}
+                        onChange={event =>
+                          setAssignmentForm({
+                            ...assignmentForm,
+                            title: event.target.value,
+                          })
+                        }
+                        placeholder="Assignment title"
+                        className="field-control"
+                      />
+                      <Textarea
+                        required
+                        minLength={5}
+                        maxLength={10000}
+                        value={assignmentForm.instructions}
+                        onChange={event =>
+                          setAssignmentForm({
+                            ...assignmentForm,
+                            instructions: event.target.value,
+                          })
+                        }
+                        placeholder="Instructions for students"
+                        className="field-control min-h-32"
+                      />
+                      <label className="field-label">
+                        Due date (optional)
+                        <Input
+                          type="datetime-local"
+                          value={assignmentForm.dueAt}
+                          onChange={event =>
+                            setAssignmentForm({
+                              ...assignmentForm,
+                              dueAt: event.target.value,
+                            })
+                          }
+                          className="field-control"
+                        />
+                      </label>
+                      <Button
+                        disabled={createAssignment.isPending}
+                        className="bg-primary font-bold uppercase tracking-[0.1em] text-black hover:bg-[#ff5a5a]"
+                      >
+                        <Plus className="h-4 w-4" /> Save assignment draft
+                      </Button>
+                      {createAssignment.error && (
+                        <p role="alert" className="text-sm text-red-300">
+                          Could not save this assignment. Check the details and
+                          try again.
+                        </p>
+                      )}
+                    </form>
+                  </CardContent>
+                </Card>
+                <div className="space-y-3">
+                  {(data?.assignments ?? []).map(assignment => (
+                    <Card
+                      key={assignment.id}
+                      className="border-white/10 bg-white/[0.035] text-white shadow-none"
+                    >
+                      <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <AdminStatus
+                              status={
+                                assignment.status === "published"
+                                  ? "approved"
+                                  : "pending"
+                              }
+                            />
+                            <span className="text-xs text-white/35">
+                              {courseName(assignment.courseId)}
+                            </span>
+                          </div>
+                          <h3 className="mt-3 text-base font-bold uppercase">
+                            {assignment.title}
+                          </h3>
+                          <p className="mt-2 whitespace-pre-line text-sm leading-6 text-white/50">
+                            {assignment.instructions}
+                          </p>
+                          <p className="mt-3 text-xs text-white/35">
+                            {assignment.dueAt
+                              ? `Due ${new Date(assignment.dueAt).toLocaleString()}`
+                              : "No due date"}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={setAssignmentStatus.isPending}
+                          onClick={() =>
+                            setAssignmentStatus.mutate({
+                              assignmentId: assignment.id,
+                              status:
+                                assignment.status === "published"
+                                  ? "draft"
+                                  : "published",
+                            })
+                          }
+                          className="border-white/15 text-white/65 hover:bg-white/10"
+                        >
+                          {assignment.status === "published"
+                            ? "Unpublish"
+                            : "Publish"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {!data?.assignments.length && (
+                    <div className="rounded-xl border border-dashed border-white/10 p-8 text-sm leading-6 text-white/40">
+                      No assignments yet. Create a draft, then publish it when
+                      it is ready for students.
+                    </div>
+                  )}
+                </div>
+              </div>
             </section>
           )}
 
