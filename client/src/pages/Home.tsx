@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import {
   ArrowRight,
   BookOpen,
@@ -56,7 +55,10 @@ function CourseCard({
       </div>
       <CardContent className="space-y-5 p-6">
         <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.12em] text-white/40">
-          <span>{courseLessons.length || 3} lessons</span>
+          <span>
+            {courseLessons.length}{" "}
+            {courseLessons.length === 1 ? "lesson" : "lessons"}
+          </span>
           <span>Self-paced</span>
         </div>
         <div className="space-y-2">
@@ -72,6 +74,11 @@ function CourseCard({
               </span>
             </div>
           ))}
+          {!courseLessons.length && (
+            <p className="border-t border-white/8 pt-3 text-sm text-white/40">
+              Lesson details will appear here as the course is prepared.
+            </p>
+          )}
         </div>
         <Button
           onClick={onStart}
@@ -91,7 +98,7 @@ export default function Home() {
   const courses = catalog.data?.courses ?? [];
   const lessons = catalog.data?.lessons ?? [];
   const primaryCourse = courses[0];
-  const lessonCount = useMemo(() => lessons.length || 3, [lessons.length]);
+  const lessonCount = lessons.length;
 
   const startLearning = () => {
     if (auth.isAuthenticated) window.location.href = "/dashboard";
@@ -210,7 +217,9 @@ export default function Home() {
               </div>
               <div>
                 <div className="font-display text-2xl font-bold text-white">
-                  {String(lessonCount).padStart(2, "0")}
+                  {catalog.isLoading
+                    ? "—"
+                    : String(lessonCount).padStart(2, "0")}
                 </div>
                 <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.15em] text-white/35">
                   Lessons
@@ -263,6 +272,20 @@ export default function Home() {
           {catalog.isLoading ? (
             <div className="rounded-xl border border-white/10 p-8 text-white/40">
               Loading the classroom…
+            </div>
+          ) : catalog.isError ? (
+            <div className="rounded-xl border border-white/10 p-8 text-white/55">
+              <p>
+                We couldn’t load the course details. Please check your
+                connection and try again.
+              </p>
+              <Button
+                onClick={() => void catalog.refetch()}
+                variant="outline"
+                className="mt-4 border-white/15 bg-white/[0.04] text-white hover:bg-white/10"
+              >
+                Try again
+              </Button>
             </div>
           ) : primaryCourse ? (
             <div className="max-w-2xl">

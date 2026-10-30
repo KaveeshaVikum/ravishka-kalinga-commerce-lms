@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -68,41 +68,79 @@ function StatusPill({ status }: { status: string }) {
 function FileToBase64({
   onFile,
 }: {
-  onFile: (file: { name: string; type: string; data: string }) => void;
+  onFile: (file?: { name: string; type: string; data: string }) => void;
 }) {
   const [label, setLabel] = useState("Choose receipt");
+  const [error, setError] = useState("");
   const readFile = (file?: File) => {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setLabel("Please choose a file under 5MB");
+      onFile(undefined);
+      setLabel("Choose receipt");
+      setError("Please choose a file smaller than 5 MB.");
       return;
     }
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    const isImage =
+      ["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+      /\.(jpe?g|png|webp)$/i.test(file.name);
+    if (!isPdf && !isImage) {
+      onFile(undefined);
+      setLabel("Choose receipt");
+      setError("Choose a JPG, PNG, WebP, or PDF receipt.");
+      return;
+    }
+    setError("");
     const reader = new FileReader();
     reader.onload = () => {
       const raw = String(reader.result ?? "");
       onFile({
         name: file.name,
-        type: file.type || "application/octet-stream",
+        type:
+          file.type ||
+          (isPdf
+            ? "application/pdf"
+            : /\.png$/i.test(file.name)
+              ? "image/png"
+              : /\.webp$/i.test(file.name)
+                ? "image/webp"
+                : "image/jpeg"),
         data: raw.split(",")[1] ?? raw,
       });
       setLabel(file.name);
     };
+    reader.onerror = () => {
+      onFile(undefined);
+      setLabel("Choose receipt");
+      setError("This file could not be read. Please try another one.");
+    };
     reader.readAsDataURL(file);
   };
   return (
-    <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/[0.025] px-4 py-3 text-sm text-white/60 transition hover:border-primary/60 hover:text-white">
-      <FileImage className="h-4 w-4 text-primary" />
-      <span className="flex-1 truncate">{label}</span>
-      <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/30">
-        JPG / PDF
-      </span>
-      <input
-        type="file"
-        accept="image/*,.pdf"
-        className="hidden"
-        onChange={event => readFile(event.target.files?.[0])}
-      />
-    </label>
+    <div>
+      <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/[0.025] px-4 py-3 text-sm text-white/60 transition hover:border-primary/60 hover:text-white">
+        <FileImage className="h-4 w-4 text-primary" />
+        <span className="flex-1 truncate">{label}</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/30">
+          JPG / PNG / PDF · 5 MB max
+        </span>
+        <input
+          type="file"
+          accept=".jpg,.jpeg,.png,.webp,.pdf"
+          className="hidden"
+          onChange={event => {
+            readFile(event.target.files?.[0]);
+            event.currentTarget.value = "";
+          }}
+          aria-label="Upload payment receipt"
+        />
+      </label>
+      {error && (
+        <p role="alert" className="mt-2 text-xs text-red-300">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -139,6 +177,16 @@ export default function Dashboard() {
     reference: string;
     file?: { name: string; type: string; data: string };
   }>({ courseId: "", amount: "", reference: "" });
+  useEffect(() => {
+    if (!auth.user) return;
+    setProfile({
+      name: auth.user.name ?? "",
+      phone: auth.user.phone ?? "",
+      school: auth.user.school ?? "",
+      grade: auth.user.grade ?? "",
+      district: auth.user.district ?? "",
+    });
+  }, [auth.user]);
   const data = overview.data;
   const displayName = auth.user?.name?.split(" ")[0] || "Student";
   const enrollmentByCourse = useMemo(
@@ -151,6 +199,37 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-[#101010] p-8 text-white/50">
         Opening your classroom…
+      </div>
+    );
+
+  if (overview.isLoading)
+    return (
+      <div
+        className="min-h-screen bg-[#101010] p-8 text-white/50"
+        role="status"
+      >
+        Loading your classroom details…
+      </div>
+    );
+
+  if (overview.isError)
+    return (
+      <div className="min-h-screen bg-[#101010] p-8 text-white">
+        <div className="mx-auto mt-16 max-w-lg rounded-xl border border-white/10 bg-white/[0.035] p-6">
+          <h1 className="font-display text-2xl font-bold uppercase">
+            We couldn’t load your classroom
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-white/55">
+            Check your connection and try again. Your account and saved details
+            are unchanged.
+          </p>
+          <Button
+            onClick={() => void overview.refetch()}
+            className="mt-5 bg-primary font-bold text-black hover:bg-[#ff5a5a]"
+          >
+            Try again
+          </Button>
+        </div>
       </div>
     );
 
@@ -179,7 +258,11 @@ export default function Dashboard() {
       <aside className={`portal-sidebar ${mobileOpen ? "is-open" : ""}`}>
         <div className="flex items-center justify-between">
           <Brand compact />
-          <button className="md:hidden" onClick={() => setMobileOpen(false)}>
+          <button
+            className="md:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
+          >
             <X className="h-5 w-5 text-white/50" />
           </button>
         </div>
@@ -194,17 +277,21 @@ export default function Dashboard() {
           </h2>
         </div>
         <nav className="mt-12 space-y-2 text-sm">
-          <a className="portal-nav-active" href="#overview">
+          <a
+            className="portal-nav-active"
+            href="#overview"
+            onClick={() => setMobileOpen(false)}
+          >
             <span className="h-1.5 w-1.5 rounded-full bg-primary" />{" "}
             {t.overview}
           </a>
-          <a href="#lessons">
+          <a href="#lessons" onClick={() => setMobileOpen(false)}>
             <PlayCircle className="h-4 w-4" /> {t.myLessons}
           </a>
-          <a href="#payment">
+          <a href="#payment" onClick={() => setMobileOpen(false)}>
             <ReceiptText className="h-4 w-4" /> {t.paymentProof}
           </a>
-          <a href="#announcements">
+          <a href="#announcements" onClick={() => setMobileOpen(false)}>
             <ArrowUpRight className="h-4 w-4" /> {t.announcements}
           </a>
           {auth.user.role === "admin" && (
@@ -224,7 +311,11 @@ export default function Dashboard() {
       </aside>
       <div className="portal-main">
         <header className="portal-header">
-          <button className="md:hidden" onClick={() => setMobileOpen(true)}>
+          <button
+            className="md:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
             <Menu className="h-5 w-5 text-white/60" />
           </button>
           <div className="eyebrow hidden md:flex">
@@ -263,17 +354,49 @@ export default function Dashboard() {
                   className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
                 >
                   {[
-                    { key: "name", label: t.fullName, type: "text" },
-                    { key: "phone", label: t.phone, type: "tel" },
-                    { key: "school", label: t.school, type: "text" },
-                    { key: "grade", label: t.grade, type: "text" },
-                    { key: "district", label: t.district, type: "text" },
+                    {
+                      key: "name",
+                      label: t.fullName,
+                      type: "text",
+                      minLength: 2,
+                      maxLength: 120,
+                    },
+                    {
+                      key: "phone",
+                      label: t.phone,
+                      type: "tel",
+                      minLength: 7,
+                      maxLength: 30,
+                    },
+                    {
+                      key: "school",
+                      label: t.school,
+                      type: "text",
+                      minLength: 2,
+                      maxLength: 180,
+                    },
+                    {
+                      key: "grade",
+                      label: t.grade,
+                      type: "text",
+                      minLength: 1,
+                      maxLength: 40,
+                    },
+                    {
+                      key: "district",
+                      label: t.district,
+                      type: "text",
+                      minLength: 2,
+                      maxLength: 80,
+                    },
                   ].map(field => (
                     <label key={field.key} className="field-label">
                       {field.label}
                       <Input
                         required
                         type={field.type}
+                        minLength={field.minLength}
+                        maxLength={field.maxLength}
                         value={profile[field.key as keyof typeof profile]}
                         onChange={event =>
                           setProfile({
@@ -293,6 +416,12 @@ export default function Dashboard() {
                       {updateProfile.isPending ? "Saving…" : t.saveProfile}
                     </Button>
                   </div>
+                  {updateProfile.error && (
+                    <p role="alert" className="text-sm text-red-300">
+                      Could not save your details. Check your connection and try
+                      again.
+                    </p>
+                  )}
                 </form>
               </CardContent>
             </Card>
@@ -319,13 +448,27 @@ export default function Dashboard() {
               <CardContent className="p-5">
                 <div className="metric-label">Access status</div>
                 <div className="mt-4 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-primary" />
+                  <span
+                    className={`h-2 w-2 rounded-full ${latestReceipt?.status === "approved" ? "bg-emerald-400" : latestReceipt?.status === "rejected" ? "bg-red-400" : "bg-primary"}`}
+                  />
                   <span className="font-display text-2xl font-bold uppercase">
-                    {latestReceipt?.status === "approved" ? "Active" : "Review"}
+                    {latestReceipt?.status === "approved"
+                      ? "Active"
+                      : latestReceipt?.status === "pending"
+                        ? "Under review"
+                        : latestReceipt?.status === "rejected"
+                          ? "Action needed"
+                          : "Not submitted"}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-white/35">
-                  Based on your latest payment proof
+                  {latestReceipt?.status === "approved"
+                    ? "Your course access is active"
+                    : latestReceipt?.status === "pending"
+                      ? "Your latest payment proof is being checked"
+                      : latestReceipt?.status === "rejected"
+                        ? "Review the note below and submit a new receipt"
+                        : "Upload a receipt to request course access"}
                 </p>
               </CardContent>
             </Card>
@@ -441,6 +584,12 @@ export default function Dashboard() {
                   </Card>
                 );
               })}
+              {!data?.courses.length && (
+                <div className="rounded-xl border border-dashed border-white/10 p-6 text-sm leading-6 text-white/45">
+                  There are no published courses yet. Check back soon, or
+                  contact your teacher if you expected to see one.
+                </div>
+              )}
             </div>
           </section>
 
@@ -490,6 +639,8 @@ export default function Dashboard() {
                           setForm({ ...form, amount: event.target.value })
                         }
                         type="number"
+                        min="1"
+                        step="1"
                         placeholder="Optional"
                         className="field-control"
                       />
@@ -501,6 +652,7 @@ export default function Dashboard() {
                         onChange={event =>
                           setForm({ ...form, reference: event.target.value })
                         }
+                        maxLength={160}
                         placeholder="Optional"
                         className="field-control"
                       />
@@ -528,8 +680,9 @@ export default function Dashboard() {
                     </div>
                   )}
                   {submitReceipt.error && (
-                    <div className="text-sm text-red-300">
-                      Could not submit this receipt. Please try again.
+                    <div role="alert" className="text-sm text-red-300">
+                      Could not submit this receipt. Check the file and payment
+                      details, then try again.
                     </div>
                   )}
                 </form>
