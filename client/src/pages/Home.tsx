@@ -194,7 +194,7 @@ export default function Home() {
               </p>
             </div>
             <img
-              src="/manus-storage/sir-cutout_a8fb0dce.png"
+              src="/teacher-cutout-clean.png"
               alt="Ravishka Kalinga teaching Commerce"
               className="teacher-cutout absolute bottom-0 right-[-12%] z-[5] w-[86%] max-w-none lg:right-[-9%] lg:w-[82%]"
             />

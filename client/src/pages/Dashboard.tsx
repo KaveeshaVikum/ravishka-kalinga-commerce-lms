@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   CircleAlert,
   Clock3,
+  ClipboardList,
   FileImage,
   FileUp,
   LockKeyhole,
@@ -170,6 +171,10 @@ export default function Dashboard() {
     school: "",
     grade: "",
     district: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    postalCode: "",
   });
   const [form, setForm] = useState<{
     courseId: string;
@@ -185,6 +190,10 @@ export default function Dashboard() {
       school: auth.user.school ?? "",
       grade: auth.user.grade ?? "",
       district: auth.user.district ?? "",
+      addressLine1: auth.user.addressLine1 ?? "",
+      addressLine2: auth.user.addressLine2 ?? "",
+      city: auth.user.city ?? "",
+      postalCode: auth.user.postalCode ?? "",
     });
   }, [auth.user]);
   const data = overview.data;
@@ -195,10 +204,34 @@ export default function Dashboard() {
   );
   const latestReceipt = data?.receipts?.[0];
 
-  if (auth.loading || !auth.user)
+  if (auth.loading)
     return (
       <div className="min-h-screen bg-[#101010] p-8 text-white/50">
         Opening your classroom…
+      </div>
+    );
+
+  if (!auth.user)
+    return (
+      <div className="min-h-screen bg-[#101010] p-6 text-white sm:p-10">
+        <div className="mx-auto mt-16 max-w-lg rounded-xl border border-white/10 bg-white/[0.035] p-6">
+          <div className="eyebrow text-primary">
+            <span className="eyebrow-line bg-primary" /> STUDENT SIGN-IN
+          </div>
+          <h1 className="mt-4 font-display text-2xl font-bold uppercase">
+            Sign-in is temporarily unavailable
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-white/55">
+            The classroom could not connect to its sign-in service. Please try
+            again later or contact the site administrator.
+          </p>
+          <a
+            href="/"
+            className="mt-5 inline-flex text-xs font-bold uppercase tracking-[0.12em] text-primary hover:underline"
+          >
+            Back to the public site
+          </a>
+        </div>
       </div>
     );
 
@@ -253,6 +286,96 @@ export default function Dashboard() {
     updateProfile.mutate(profile);
   };
 
+  const profileFields = [
+    {
+      key: "name",
+      label: t.fullName,
+      type: "text",
+      minLength: 2,
+      maxLength: 120,
+      required: true,
+    },
+    {
+      key: "phone",
+      label: t.phone,
+      type: "tel",
+      minLength: 7,
+      maxLength: 30,
+      required: true,
+    },
+    {
+      key: "school",
+      label: t.school,
+      type: "text",
+      minLength: 2,
+      maxLength: 180,
+      required: true,
+    },
+    {
+      key: "grade",
+      label: t.grade,
+      type: "text",
+      minLength: 1,
+      maxLength: 40,
+      required: true,
+    },
+    {
+      key: "district",
+      label: t.district,
+      type: "text",
+      minLength: 2,
+      maxLength: 80,
+      required: true,
+    },
+    {
+      key: "addressLine1",
+      label: t.addressLine1,
+      type: "text",
+      minLength: 3,
+      maxLength: 180,
+      required: true,
+    },
+    {
+      key: "addressLine2",
+      label: t.addressLine2,
+      type: "text",
+      maxLength: 180,
+      required: false,
+    },
+    {
+      key: "city",
+      label: t.city,
+      type: "text",
+      minLength: 2,
+      maxLength: 100,
+      required: true,
+    },
+    {
+      key: "postalCode",
+      label: t.postalCode,
+      type: "text",
+      maxLength: 20,
+      required: false,
+    },
+  ] as const;
+
+  const renderProfileField = (field: (typeof profileFields)[number]) => (
+    <label key={field.key} className="field-label">
+      {field.label}
+      <Input
+        required={field.required}
+        type={field.type}
+        minLength={"minLength" in field ? field.minLength : 0}
+        maxLength={field.maxLength}
+        value={profile[field.key]}
+        onChange={event =>
+          setProfile({ ...profile, [field.key]: event.target.value })
+        }
+        className="field-control"
+      />
+    </label>
+  );
+
   return (
     <div className="portal-shell min-h-screen bg-[#101010] text-white">
       <aside className={`portal-sidebar ${mobileOpen ? "is-open" : ""}`}>
@@ -287,6 +410,9 @@ export default function Dashboard() {
           </a>
           <a href="#lessons" onClick={() => setMobileOpen(false)}>
             <PlayCircle className="h-4 w-4" /> {t.myLessons}
+          </a>
+          <a href="#assignments" onClick={() => setMobileOpen(false)}>
+            <ClipboardList className="h-4 w-4" /> {t.myAssignments}
           </a>
           <a href="#payment" onClick={() => setMobileOpen(false)}>
             <ReceiptText className="h-4 w-4" /> {t.paymentProof}
@@ -353,61 +479,11 @@ export default function Dashboard() {
                   onSubmit={saveProfile}
                   className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
                 >
-                  {[
-                    {
-                      key: "name",
-                      label: t.fullName,
-                      type: "text",
-                      minLength: 2,
-                      maxLength: 120,
-                    },
-                    {
-                      key: "phone",
-                      label: t.phone,
-                      type: "tel",
-                      minLength: 7,
-                      maxLength: 30,
-                    },
-                    {
-                      key: "school",
-                      label: t.school,
-                      type: "text",
-                      minLength: 2,
-                      maxLength: 180,
-                    },
-                    {
-                      key: "grade",
-                      label: t.grade,
-                      type: "text",
-                      minLength: 1,
-                      maxLength: 40,
-                    },
-                    {
-                      key: "district",
-                      label: t.district,
-                      type: "text",
-                      minLength: 2,
-                      maxLength: 80,
-                    },
-                  ].map(field => (
-                    <label key={field.key} className="field-label">
-                      {field.label}
-                      <Input
-                        required
-                        type={field.type}
-                        minLength={field.minLength}
-                        maxLength={field.maxLength}
-                        value={profile[field.key as keyof typeof profile]}
-                        onChange={event =>
-                          setProfile({
-                            ...profile,
-                            [field.key]: event.target.value,
-                          })
-                        }
-                        className="field-control"
-                      />
-                    </label>
-                  ))}
+                  {profileFields.slice(0, 5).map(renderProfileField)}
+                  <div className="eyebrow sm:col-span-2 lg:col-span-3">
+                    <span className="eyebrow-line" /> {t.addressSection}
+                  </div>
+                  {profileFields.slice(5).map(renderProfileField)}
                   <div className="flex items-end">
                     <Button
                       disabled={updateProfile.isPending}
@@ -588,6 +664,78 @@ export default function Dashboard() {
                 <div className="rounded-xl border border-dashed border-white/10 p-6 text-sm leading-6 text-white/45">
                   There are no published courses yet. Check back soon, or
                   contact your teacher if you expected to see one.
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section id="assignments" className="mt-12">
+            <div className="section-heading">
+              <div>
+                <div className="eyebrow">
+                  <span className="eyebrow-line" /> {t.myAssignments}
+                </div>
+                <h2 className="mt-3 font-display text-3xl font-black uppercase tracking-[-0.04em]">
+                  {t.assignmentsTitle}
+                </h2>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-white/40">
+                  {t.assignmentsBody}
+                </p>
+              </div>
+              <Badge className="border-white/10 bg-white/5 text-white/55">
+                {data?.assignments.length ?? 0}
+              </Badge>
+            </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {(data?.assignments ?? []).map(assignment => {
+                const course = data?.courses.find(
+                  item => item.id === assignment.courseId
+                );
+                const dueAt = assignment.dueAt
+                  ? new Date(assignment.dueAt)
+                  : null;
+                const overdue = dueAt ? dueAt.getTime() < Date.now() : false;
+                return (
+                  <Card
+                    key={assignment.id}
+                    className="border-white/10 bg-white/[0.035] text-white shadow-none"
+                  >
+                    <CardContent className="flex gap-4 p-5">
+                      <div className="rounded-lg bg-primary/10 p-3 text-primary">
+                        <ClipboardList className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className="border-primary/20 bg-primary/10 text-primary">
+                            {course?.title ?? "Commerce"}
+                          </Badge>
+                          {dueAt && overdue && (
+                            <Badge className="border-red-400/20 bg-red-400/10 text-red-200">
+                              {t.overdue}
+                            </Badge>
+                          )}
+                        </div>
+                        <h3 className="mt-3 text-base font-bold uppercase">
+                          {assignment.title}
+                        </h3>
+                        <p className="mt-2 whitespace-pre-line text-sm leading-6 text-white/55">
+                          {assignment.instructions}
+                        </p>
+                        <p className="mt-4 text-xs font-semibold text-white/40">
+                          {t.dueDate}:{" "}
+                          {dueAt ? dueAt.toLocaleDateString() : t.noDueDate}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              {!data?.assignments.length && (
+                <div className="rounded-xl border border-dashed border-white/10 p-6 text-sm leading-6 text-white/45 md:col-span-2">
+                  <div className="font-semibold text-white/65">
+                    {t.noAssignments}
+                  </div>
+                  <p className="mt-1">{t.noAssignmentsBody}</p>
                 </div>
               )}
             </div>
