@@ -12,6 +12,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { verifyFirebaseIdToken } from "./firebaseToken";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -36,9 +37,9 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
     console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
-    if (!ENV.oAuthServerUrl) {
+    if (!ENV.oAuthServerUrl && !ENV.firebaseProjectId) {
       console.warn(
-        "[OAuth] Local OAuth is not configured. Student/admin sign-in requires the deployed Manus environment or OAuth environment variables."
+        "[Auth] Firebase and Manus OAuth are not configured. Configure either provider to enable student/admin sign-in."
       );
     }
   }
@@ -262,7 +263,49 @@ class SDKServer {
     } as GetUserInfoWithJwtResponse;
   }
 
+  private async authenticateFirebaseRequest(
+    token: string
+  ): Promise<AuthenticatedUser> {
+    const identity = await verifyFirebaseIdToken(token, ENV.firebaseProjectId);
+    const openId = `firebase:${identity.uid}`;
+    const loginMethod =
+      identity.provider === "google.com"
+        ? "google"
+        : identity.provider === "phone"
+          ? "phone"
+          : "firebase";
+
+    await db.upsertUser({
+      openId,
+      name: identity.name,
+      email: identity.email,
+      phone: identity.phoneNumber,
+      loginMethod,
+      lastSignedIn: new Date(),
+    });
+
+    const user = await db.getUserByOpenId(openId);
+    if (!user) throw ForbiddenError("Firebase user not found");
+    return user;
+  }
+
   async authenticateRequest(req: Request): Promise<AuthenticatedUser> {
+    const authHeader = req.headers.authorization;
+    if (
+      ENV.firebaseProjectId &&
+      typeof authHeader === "string" &&
+      authHeader.startsWith("Bearer ")
+    ) {
+      try {
+        return await this.authenticateFirebaseRequest(authHeader.slice(7));
+      } catch (error) {
+        console.warn(
+          "[Auth] Firebase token could not be used:",
+          error instanceof Error ? error.message : "unknown error"
+        );
+      }
+    }
+
     // 1. Prefer the session cookie (regular OAuth login).
     const cookies = this.parseCookies(req.headers.cookie);
     let sessionToken = cookies.get(COOKIE_NAME);
@@ -277,7 +320,6 @@ class SDKServer {
     //    sessionStorage), used when the browser blocks iframe cookies such as
     //    Safari ITP, private browsing, or iOS/Android WebView.
     if (!sessionToken) {
-      const authHeader = req.headers.authorization;
       if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
         sessionToken = authHeader.slice(7);
       }

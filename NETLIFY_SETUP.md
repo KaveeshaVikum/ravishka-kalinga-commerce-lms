@@ -1,28 +1,35 @@
-# Netlify backend setup
+# Netlify and Firebase setup
 
-The site uses the existing Manus OAuth flow and Express/tRPC backend. Netlify must deploy the function in `netlify/functions/api.ts`; the `/api/*` rewrite is configured in `netlify.toml`.
+The site uses Firebase Authentication for Google sign-in and phone verification, with the existing Express/tRPC API running through `netlify/functions/api.ts`. The `/api/*` rewrite is configured in `netlify.toml`. The old Manus OAuth flow remains an optional fallback when its settings are present.
 
-## Required Netlify variables
+## Firebase project setup
 
-In the Netlify site's environment variables, configure these for the deploy contexts that should support student sign-in:
+1. In Firebase Console, create or select a project and add a Web app. Copy the web-app `apiKey`, `authDomain`, `projectId`, and `appId` values.
+2. In **Authentication → Sign-in method**, enable **Google** and **Phone**. For phone sign-in, set the SMS region policy to the countries you intend to serve.
+3. In **Authentication → Settings → Authorized domains**, add the production Netlify domain and any custom domain used by students. Add preview domains only if you plan to test sign-in on deploy previews.
+4. In Firebase **Authentication → Users**, sign in once with the account that should administer the LMS and copy its Firebase UID.
 
-| Variable | Purpose | Secret? |
-| --- | --- | --- |
-| `MANUS_PROJECT_ID` | Manus OAuth application/project ID exposed to the browser | No |
-| `MANUS_OAUTH_PORTAL_URL` | Manus sign-in portal URL exposed to the browser | No |
-| `MANUS_OAUTH_API_URL` | Server-side OAuth token and user-info API | Treat as configuration |
-| `MANUS_JWT_SECRET` | Signs the LMS session cookie | Yes |
-| `DATABASE_URL` | MySQL-compatible database connection for students, courses, assignments, receipts, and profiles | Yes |
-| `OWNER_OPEN_ID` | Manus user ID that should receive the LMS admin role | Treat as sensitive account identifier |
+## Netlify environment variables
 
-The project currently has no Netlify database or OAuth variables configured. Do not paste secret values into GitHub or this documentation.
+Add these to the Netlify site for the production deploy context (and any preview context where you want sign-in to work):
 
-## Optional storage variables
+| Variable               | Purpose                                                                | Secret?                        |
+| ---------------------- | ---------------------------------------------------------------------- | ------------------------------ |
+| `FIREBASE_API_KEY`     | Firebase web-app key exposed to the browser                            | No; public Firebase config     |
+| `FIREBASE_AUTH_DOMAIN` | Firebase web-app auth domain                                           | No                             |
+| `FIREBASE_PROJECT_ID`  | Firebase project identity used by the client and server token verifier | No                             |
+| `FIREBASE_APP_ID`      | Firebase web-app identifier                                            | No                             |
+| `OWNER_FIREBASE_UID`   | Firebase UID that receives the LMS admin role                          | Treat as an account identifier |
+| `DATABASE_URL`         | MySQL-compatible LMS database connection                               | Yes                            |
 
-Existing receipt and lesson-recording uploads also require `MANUS_API_URL` and `MANUS_API_KEY`. These are not required just to start OAuth, but upload/review file flows need them.
+The API verifies Firebase ID tokens against Firebase's published signing certificates and validates their project, issuer, audience, signature, and time claims. No Firebase service-account private key is needed for this verification path. The MySQL database is still required: without it, Firebase can authenticate a browser user, but the LMS cannot persist that student or load their courses, profile, enrollments, assignments, or receipts.
+
+## Optional integrations
+
+The legacy Manus OAuth fallback can remain available by configuring `MANUS_PROJECT_ID`, `MANUS_OAUTH_PORTAL_URL`, `MANUS_OAUTH_API_URL`, `MANUS_JWT_SECRET`, and `OWNER_OPEN_ID`. File uploads for receipts and lesson recordings also require `MANUS_API_URL` and `MANUS_API_KEY`.
 
 ## Database migration
 
-After setting `DATABASE_URL` to the intended database, run `pnpm db:migrate` once to add student address fields and the assignments table. The migration keeps existing profile data and marks users whose new address fields are empty as needing profile completion again. Review the target database before running migrations; the command changes its schema and profile-completion flags.
+After `DATABASE_URL` points to the intended database, run `pnpm db:migrate` once to apply the committed migrations for student address fields, assignments, and the longer provider-prefixed Firebase UID. The address migration may mark profiles with missing address data as incomplete so those students are prompted to finish their profile. Review the target database before applying migrations.
 
-After variables are configured and the migration is applied, deploy the branch and verify `/api/health`, OAuth callback, student profile save, and the assignment list on the live site.
+After configuration and migration, deploy the branch and verify `/api/health`, Google sign-in, phone verification on the authorized domain, student profile save, assignment loading, and admin authorization for the configured Firebase UID.

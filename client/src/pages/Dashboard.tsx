@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Brand } from "@/components/Brand";
+import { FirebaseLogin } from "@/components/FirebaseLogin";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import {
@@ -146,7 +147,7 @@ function FileToBase64({
 }
 
 export default function Dashboard() {
-  const auth = useAuth({ redirectOnUnauthenticated: true });
+  const auth = useAuth();
   const { t } = useLanguage();
   const utils = trpc.useUtils();
   const updateProfile = trpc.auth.updateProfile.useMutation({
@@ -219,12 +220,13 @@ export default function Dashboard() {
             <span className="eyebrow-line bg-primary" /> STUDENT SIGN-IN
           </div>
           <h1 className="mt-4 font-display text-2xl font-bold uppercase">
-            Sign-in is temporarily unavailable
+            Sign in to your classroom
           </h1>
-          <p className="mt-3 text-sm leading-6 text-white/55">
-            The classroom could not connect to its sign-in service. Please try
-            again later or contact the site administrator.
+          <p className="mb-5 mt-3 text-sm leading-6 text-white/55">
+            Continue with Google or verify your mobile number to open your
+            student dashboard.
           </p>
+          <FirebaseLogin compact />
           <a
             href="/"
             className="mt-5 inline-flex text-xs font-bold uppercase tracking-[0.12em] text-primary hover:underline"

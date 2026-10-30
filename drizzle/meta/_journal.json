@@ -29,6 +29,13 @@
       "when": 1793379767094,
       "tag": "0003_student_address_assignments",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1793381282292,
+      "tag": "0004_widen_firebase_identity",
+      "breakpoints": true
     }
   ]
 }

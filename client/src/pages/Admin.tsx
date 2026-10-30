@@ -23,10 +23,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Brand } from "@/components/Brand";
+import { FirebaseLogin } from "@/components/FirebaseLogin";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { LanguageToggle, useLanguage } from "@/components/Language";
-import { startLogin } from "@/const";
 
 function readAsBase64(
   file: File,
@@ -172,12 +172,7 @@ export default function Admin() {
               </p>
             </CardHeader>
             <CardContent>
-              <Button
-                onClick={startLogin}
-                className="w-full bg-primary font-bold uppercase tracking-[.1em] text-black hover:bg-[#ff5a5a]"
-              >
-                {t.signInAdmin}
-              </Button>
+              <FirebaseLogin compact />
             </CardContent>
           </Card>
         </div>

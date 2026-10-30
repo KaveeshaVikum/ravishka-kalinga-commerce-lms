@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Brand, Wordmark } from "@/components/Brand";
-import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import {
@@ -101,8 +100,7 @@ export default function Home() {
   const lessonCount = lessons.length;
 
   const startLearning = () => {
-    if (auth.isAuthenticated) window.location.href = "/dashboard";
-    else startLogin();
+    window.location.href = "/dashboard";
   };
 
   return (
